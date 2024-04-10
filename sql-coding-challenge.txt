@@ -1,0 +1,236 @@
+use petpals;
+
+insert into pets(name,age,breed,type,available_for_adoption,shelter_id)
+values
+('tommy',5,'bulldog','dog',1,1),
+('luna',3,'british','cat',0,1),
+('bolt',6,'german shepherd','dog',1,3),
+('lucky',2,'afador','dog',1,2),
+('zoe',4,'persian','cat',1,2);
+
+insert into shelters(name,location)
+values
+('pets heaven','mumbai'),
+('home for stray','pune'),
+('rescue home','chennai');
+
+insert into donations(donar_name,donar_type,donation_amount,donation_item,donation_date,pet_id)
+values
+('harry','cash',5000,'toy','2024-04-10',1),
+('ronald','item',2000,'food item','2024-04-15',3),
+('draco','cash',4000,'belt','2024-03-09',5);
+
+insert into adoption_events(event_name,event_date,location,pet_id)
+values
+('adopting stray','2024-04-08','mumbai',1),
+('adopting stray','2024-04-08','mumbai',3),
+('stray heaven','2024-03-17','nagpur',4),
+('stray heaven','2024-03-17','nagpur',5);
+
+insert into participants(participant_name,participant_type,event_id)
+values
+('jhonny','adopter',1),
+('robert','adopter',2),
+('will','shelter',1);
+
+-- -----------------------------------------------------------
+-- Q1, Q2, Q3, Q4 ==> completed above
+
+-- Q5 Write an SQL query that retrieves a list of available pets (those marked as available
+-- for adoption) from the "Pets" table. Include the pet's name, age, breed, and type in the 
+-- result set. Ensure that the query filters out pets that are not available for adoption. 
+select name,age,breed,type
+from pets 
+where available_for_adoption=1;
+/* utput
++-------+-----+-----------------+------+
+| name  | age | breed           | type |
++-------+-----+-----------------+------+
+| tommy |   5 | bulldog         | dog  |
+| bolt  |   6 | german shepherd | dog  |
+| lucky |   2 | afador          | dog  |
+| zoe   |   4 | persian         | cat  |
++-------+-----+-----------------+------+*/
+
+-- Q6 Write an SQL query that retrieves the names of participants (shelters and adopters)
+-- registered for a specific adoption event. Use a parameter to specify the event ID.
+-- Ensure that the query joins the necessary tables to retrieve the participant names & types.
+select p.participant_name,p.participant_type
+from adoption_events ae JOIN participants p ON ae.event_id=p.event_id
+where ae.event_id=1;
+/*output
++------------------+------------------+
+| participant_name | participant_type |
++------------------+------------------+
+| jhonny           | adopter          |
+| will             | shelter          |
++------------------+------------------+*/
+
+-- Q7 Create a stored procedure in SQL that allows a shelter to update its information 
+-- (name and location) in the "Shelters" table. Use parameters to pass the shelter ID and 
+-- the new information. Ensure that the procedure performs the update and handles potential
+-- errors, such as an invalid shelter ID.
+update shelters
+set name='pets home',location='indore'
+where shelter_id=1;
+
+-- Q8 Write an SQL query that calculates and retrieves the total donation amount for each 
+-- shelter (by shelter name) from the "Donations" table. The result should include the shelter
+-- name and the total donation amount. Ensure that the query handles cases where a shelter 
+-- has received no donations. 
+select s.name, sum(d.donation_amount) as total_donation
+from pets p
+JOIN donations d ON d.pet_id=p.pet_id
+JOIN shelters s ON p.shelter_id=s.shelter_id
+group by s.name;
+/*output
++----------------+----------------+
+| name           | total_donation |
++----------------+----------------+
+| home for stray |           4000 |
+| pets home      |           5000 |
+| rescue home    |           2000 |
++----------------+----------------+*/
+
+-- Q9 Write an SQL query that retrieves the names of pets from the "Pets" table that do not 
+-- have an owner (i.e., where "OwnerID" is null). Include the pet's name, age, breed, and
+-- type in the result set
+
+
+-- Q10 Write an SQL query that retrieves the total donation amount for each month and year 
+-- (e.g., January 2023) from the "Donations" table. The result should include the month-year 
+-- and the corresponding total donation amount. Ensure that the query handles cases where no 
+-- donations were made in a specific month-year. 
+
+-- Q11 Retrieve a list of distinct breeds for all pets that are either aged between 1 and 3 
+-- years or older than 5 years. 
+select distinct breed
+from pets
+where age BETWEEN 1 AND 3 OR age>5;
+/*output
++-----------------+
+| breed           |
++-----------------+
+| british         |
+| german shepherd |
+| afador          |
++-----------------+*/
+
+-- Q12 Retrieve a list of pets and their respective shelters where the pets are currently 
+-- available for adoption. 
+select *
+from pets p JOIN shelters s ON p.shelter_id=s.shelter_id
+where available_for_adoption=1;
+/*output
++--------+-------+-----+-----------------+------+------------------------+------------+------------+----------------+----------+
+| pet_id | name  | age | breed           | type | available_for_adoption | shelter_id | shelter_id | name           | location |
++--------+-------+-----+-----------------+------+------------------------+------------+------------+----------------+----------+
+|      1 | tommy |   5 | bulldog         | dog  |                      1 |          1 |          1 | pets home      | indore   |
+|      3 | bolt  |   6 | german shepherd | dog  |                      1 |          3 |          3 | rescue home    | chennai  |
+|      4 | lucky |   2 | afador          | dog  |                      1 |          2 |          2 | home for stray | pune     |
+|      5 | zoe   |   4 | persian         | cat  |                      1 |          2 |          2 | home for stray | pune     |
++--------+-------+-----+-----------------+------+------------------------+------------+------------+----------------+----------+*/
+
+-- Q13 Find the total number of participants in events organized by shelters located in 
+-- specific city. Example: City=Chennai
+select s.name, count(pt.participant_id) as 'Number of Participants'
+from shelters s 
+JOIN pets p ON s.shelter_id=p.shelter_id
+JOIN adoption_events ae ON ae.pet_id=p.pet_id
+JOIN participants pt ON pt.event_id=ae.event_id
+where s.location='chennai';
+/*output
++-------------+------------------------+
+| name        | Number of Participants |
++-------------+------------------------+
+| rescue home |                      1 |
++-------------+------------------------+*/
+
+-- Q14 Retrieve a list of unique breeds for pets with ages between 1 and 5 years
+select distinct *
+from pets
+where age BETWEEN 1 and 5;
+/*output
++--------+-------+-----+---------+------+------------------------+------------+
+| pet_id | name  | age | breed   | type | available_for_adoption | shelter_id |
++--------+-------+-----+---------+------+------------------------+------------+
+|      1 | tommy |   5 | bulldog | dog  |                      1 |          1 |
+|      2 | luna  |   3 | british | cat  |                      0 |          1 |
+|      4 | lucky |   2 | afador  | dog  |                      1 |          2 |
+|      5 | zoe   |   4 | persian | cat  |                      1 |          2 |
++--------+-------+-----+---------+------+------------------------+------------+*/
+
+-- Q15 Find the pets that have not been adopted by selecting their information from 
+-- the 'Pet' table.
+select *
+from pets 
+where available_for_adoption=1;
+/*output
++--------+-------+-----+-----------------+------+------------------------+------------+
+| pet_id | name  | age | breed           | type | available_for_adoption | shelter_id |
++--------+-------+-----+-----------------+------+------------------------+------------+
+|      1 | tommy |   5 | bulldog         | dog  |                      1 |          1 |
+|      3 | bolt  |   6 | german shepherd | dog  |                      1 |          3 |
+|      4 | lucky |   2 | afador          | dog  |                      1 |          2 |
+|      5 | zoe   |   4 | persian         | cat  |                      1 |          2 |
++--------+-------+-----+-----------------+------+------------------------+------------+*/
+
+-- Q16 Retrieve the names of all adopted pets along with the adopter's name from 
+-- the 'Adoption' and 'User' tables
+select p.name as pet_name, pt.participant_name as 'adopter\'s name'
+from pets p 
+JOIN adoption_events ae ON p.pet_id=ae.pet_id
+JOIN participants pt ON pt.event_id=ae.event_id
+where participant_type='adopter';
+/*output
++----------+----------------+
+| pet_name | adopter's name |
++----------+----------------+
+| tommy    | jhonny         |
+| bolt     | robert         |
++----------+----------------+*/
+
+-- Q17 Retrieve a list of all shelters along with the count of pets currently 
+-- available for adoption in each shelter. 
+select s.name, count(p.pet_id) as number_of_pets
+from pets p JOIN shelters s ON p.shelter_id=s.shelter_id
+where p.available_for_adoption=1
+group by s.shelter_id;
+/*output
++----------------+----------------+
+| name           | number_of_pets |
++----------------+----------------+
+| pets home      |              1 |
+| home for stray |              2 |
+| rescue home    |              1 |
++----------------+----------------+*/
+
+-- Q18 Find pairs of pets from the same shelter that have the same breed. 
+
+-- Q19  List all possible combinations of shelters and adoption events.
+select *
+from shelters s 
+JOIN pets p ON s.shelter_id=p.shelter_id
+JOIN adoption_events ae ON ae.pet_id=p.pet_id;
+/*
++------------+----------------+----------+--------+-------+-----+-----------------+------+------------------------+------------+----------+----------------+------------+----------+--------+
+| shelter_id | name           | location | pet_id | name  | age | breed           | type | available_for_adoption | shelter_id | event_id | event_name     | event_date | location | pet_id |
++------------+----------------+----------+--------+-------+-----+-----------------+------+------------------------+------------+----------+----------------+------------+----------+--------+
+|          1 | pets home      | indore   |      1 | tommy |   5 | bulldog         | dog  |                      1 |          1 |        1 | adopting stray | 2024-04-08 | mumbai   |      1 |
+|          3 | rescue home    | chennai  |      3 | bolt  |   6 | german shepherd | dog  |                      1 |          3 |        2 | adopting stray | 2024-04-08 | mumbai   |      3 |
+|          2 | home for stray | pune     |      4 | lucky |   2 | afador          | dog  |                      1 |          2 |        3 | stray heaven   | 2024-03-17 | nagpur   |      4 |
+|          2 | home for stray | pune     |      5 | zoe   |   4 | persian         | cat  |                      1 |          2 |        4 | stray heaven   | 2024-03-17 | nagpur   |      5 |
++------------+----------------+----------+--------+-------+-----+-----------------+------+------------------------+------------+----------+----------------+------------+----------+--------+*/
+
+-- Q20 Determine the shelter that has the highest number of adopted pets.
+select s.name as shelter_name, count(p.pet_id) as number_of_pets
+from pets p JOIN shelters s ON p.shelter_id=s.shelter_id
+group by s.shelter_id
+order by number_of_pets DESC
+limit 1;
+/*output
++--------------+----------------+
+| shelter_name | number_of_pets |
++--------------+----------------+
+| pets home    |              2 |
++--------------+----------------+*/
